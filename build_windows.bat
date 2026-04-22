@@ -1,72 +1,37 @@
 @echo off
-chcp 65001 >nul
-echo ==========================================
-echo  银行柜面双录控件 - Windows 32位编译脚本
-echo ==========================================
-echo.
+setlocal
 
-REM 设置 Qt 5.15.2 MinGW 32-bit 环境变量
+:: ============================================================
+::  DualRecordService - Windows Build Script (Qt 5.15.2 MinGW 32-bit)
+:: ============================================================
+
+:: --- Environment Setup ---
 set PATH=C:\Qt\5.15.2\mingw81_32\bin;C:\Qt\Tools\mingw810_32\bin;%PATH%
 
-echo [1/5] 清理旧文件...
-if exist release rmdir /s /q release
-if exist deploy rmdir /s /q deploy
-if exist build rmdir /s /q build
-if exist Makefile del /f Makefile
-if exist Makefile.Debug del /f Makefile.Debug
-if exist Makefile.Release del /f Makefile.Release
+:: --- Ensure resources directory ---
+if not exist resources mkdir resources
+if not exist resources\app.ico copy icons\win\icon.ico resources\app.ico >nul 2>nul
 
-echo [2/5] 生成 Makefile...
-qmake DualRecordService.pro
+:: --- Run qmake ---
+C:\Qt\5.15.2\mingw81_32\bin\qmake.exe DualRecordService.pro
 if %errorlevel% neq 0 (
-    echo [错误] qmake 执行失败
-    pause
+    echo [ERROR] qmake failed!
     exit /b 1
 )
 
-REM qmake 会重建 build 目录，再次清理确保无残留 .o 文件
-if exist build rmdir /s /q build
+:: --- Ensure build output directories exist ---
+if not exist build mkdir build
+if not exist build\obj mkdir build\obj
+if not exist build\moc mkdir build\moc
+if not exist build\uic mkdir build\uic
 
-echo [3/5] 编译程序...
+:: --- Build Release ---
 mingw32-make release -j4
 if %errorlevel% neq 0 (
-    echo [错误] 编译失败
-    pause
+    echo [ERROR] Build failed!
     exit /b 1
 )
 
-echo [4/5] 部署 Qt 依赖...
-mkdir deploy 2>nul
-copy release\DualRecordService.exe deploy\
-windeployqt --release --force --no-translations deploy\DualRecordService.exe
-
-echo [5/5] 打包安装程序...
-cd installer
-if exist "C:\Program Files (x86)\NSIS\makensis.exe" (
-    "C:\Program Files (x86)\NSIS\makensis.exe" install_windows.nsi
-    echo.
-    echo ==========================================
-    echo  编译完成!
-    echo ==========================================
-    echo.
-    echo  输出文件:
-    echo   - 主程序: release\DualRecordService.exe
-    echo   - 便携版: deploy\ (目录)
-    echo   - 安装包: installer\BankDualRecord_Setup_v1.0.0_x86.exe
-    echo.
-) else (
-    echo [警告] 未找到 NSIS，跳过安装包生成
-    echo 如需生成安装包，请安装 NSIS: https://nsis.sourceforge.io/
-    echo.
-    echo ==========================================
-    echo  编译完成 (无安装包)
-    echo ==========================================
-    echo.
-    echo  输出文件:
-    echo   - 主程序: release\DualRecordService.exe
-    echo   - 便携版: deploy\ (目录)
-    echo.
-)
-
-cd ..
-pause
+echo.
+echo [SUCCESS] Build completed. Output: release\DualRecordService.exe
+endlocal
