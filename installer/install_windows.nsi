@@ -1,4 +1,4 @@
-; NSIS 一键安装脚本 - 银行柜面双录控件 (Windows 32位)
+﻿; NSIS 一键安装脚本 - 银行柜面双录控件 (Windows 32位)
 ; 使用 NSIS (Nullsoft Scriptable Install System) - 开源免版税
 
 !define APP_NAME    "银行双录控件"
