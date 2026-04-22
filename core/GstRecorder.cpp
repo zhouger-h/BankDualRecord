@@ -502,3 +502,57 @@ void GstRecorder::handleMessage(GstBus *bus, GstMessage *msg)
 }
 
 #endif // Q_OS_LINUX
+
+// ─────────────────────────────────────────
+// Windows Stub 实现（Windows 上使用 Qt QMediaRecorder，不使用 GStreamer）
+// ─────────────────────────────────────────
+#ifdef Q_OS_WIN
+GstRecorder::GstRecorder(QObject *parent)
+    : QObject(parent)
+    , m_pipeline(nullptr)
+    , m_recording(false)
+    , m_eosSent(false)
+    , m_previewWId(0)
+{
+}
+
+GstRecorder::~GstRecorder()
+{
+}
+
+bool GstRecorder::start(const QString &,
+                        const QString &,
+                        WId,
+                        const QSize &)
+{
+    m_lastError = "GstRecorder is not supported on Windows";
+    return false;
+}
+
+bool GstRecorder::stop(int)
+{
+    return true;
+}
+
+bool GstRecorder::isRecording() const
+{
+    return false;
+}
+
+QString GstRecorder::lastError() const
+{
+    return m_lastError;
+}
+
+void GstRecorder::onBusMessage(GstBus *, GstMessage *, GstPtr)
+{
+}
+
+void GstRecorder::handleMessage(GstBus *, GstMessage *)
+{
+}
+
+void GstRecorder::onPrepareXWindowId(GstElement *, GstPtr)
+{
+}
+#endif // Q_OS_WIN
