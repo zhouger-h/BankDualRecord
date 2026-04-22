@@ -1,0 +1,5 @@
+deb_build/*
+.qmake.*
+*.deb
+Makefile
+DualRecordService
