@@ -70,7 +70,7 @@ jobs:
           if exist Makefile del /f Makefile
           if exist Makefile.Debug del /f Makefile.Debug
           if exist Makefile.Release del /f Makefile.Release
-          if exist release rmdir /s /q release
+          if exist out\build rmdir /s /q out\build
           qmake DualRecordService.pro
           if %errorlevel% neq 0 (
             echo [ERROR] qmake failed
@@ -81,18 +81,15 @@ jobs:
             echo [ERROR] make failed
             exit /b 1
           )
-          dir release\
+          dir out\windows\
 
       # ── 6. 用 windeployqt 收集 Qt 运行库 ────────────────────
       - name: Deploy Qt dependencies (windeployqt)
         shell: cmd
         run: |
-          if exist deploy rmdir /s /q deploy
-          mkdir deploy
-          copy release\DualRecordService.exe deploy\
-          windeployqt --release --force --no-translations deploy\DualRecordService.exe
-          echo --- deploy directory ---
-          dir deploy\
+          windeployqt --release --force --no-translations out\windows\DualRecordService.exe
+          echo --- out\windows directory ---
+          dir out\windows\
 
       # ── 7. 准备 NSIS 安装包输入文件 ─────────────────────────
       #   install_windows.nsi 从 installer\bin\ 读取所有 dll
@@ -100,9 +97,9 @@ jobs:
       - name: Prepare NSIS input files
         shell: pwsh
         run: |
-          # 创建 installer\bin\ 并将 deploy\ 的内容复制进去
+          # 创建 installer\bin\ 并将 out\windows\ 的内容复制进去
           New-Item -ItemType Directory -Force -Path "installer\bin"
-          Copy-Item -Path "deploy\*" -Destination "installer\bin\" -Recurse -Force
+          Copy-Item -Path "out\windows\*" -Destination "installer\bin\" -Recurse -Force
 
           # 若不存在 LICENSE.txt 则创建占位文件（NSIS 脚本要求）
           New-Item -ItemType Directory -Force -Path "installer\docs"
@@ -139,20 +136,22 @@ jobs:
       - name: Build NSIS installer
         shell: cmd
         run: |
+          if not exist release mkdir release
           cd installer
           "C:\Program Files (x86)\NSIS\makensis.exe" install_windows.nsi
           if %errorlevel% neq 0 (
             echo [ERROR] NSIS build failed
             exit /b 1
           )
-          echo --- installer output ---
+          echo --- release output ---
+          cd ..\release
           dir /b *.exe
 
       # ── 10. 验证安装包 ───────────────────────────────────────
       - name: Verify installer
         shell: pwsh
         run: |
-          $installer = Get-ChildItem "installer\BankDualRecord_Setup_*.exe" | Select-Object -First 1
+          $installer = Get-ChildItem "release\BankDualRecord_Setup_*.exe" | Select-Object -First 1
           if ($null -eq $installer) {
             Write-Error "Installer not found!"
             exit 1

@@ -12,21 +12,23 @@
 
 
 Name "${APP_NAME} v${APP_VERSION}"
-OutFile "BankDualRecord_Setup_v${APP_VERSION}_x86.exe"
 InstallDir "${INSTALL_DIR}"
 RequestExecutionLevel admin
 SetCompressor /SOLID lzma
 
 ; 安装程序图标
-!define MUI_ICON "icons\win\icon.ico"
-!define MUI_UNICON "icons\win\icon.ico"
+!define MUI_ICON "..\icons\win\icon.ico"
+!define MUI_UNICON "..\icons\win\icon.ico"
+
+; 输出目录：release/
+OutFile "..\release\BankDualRecord_Setup_v${APP_VERSION}_x86.exe"
 
 ;─────────────────────────────────────────
 ; 页面
 ;─────────────────────────────────────────
 !include "MUI2.nsh"
 !insertmacro MUI_PAGE_WELCOME
-!insertmacro MUI_PAGE_LICENSE "docs\LICENSE.txt"
+!insertmacro MUI_PAGE_LICENSE "..\docs\LICENSE.txt"
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH

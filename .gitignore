@@ -1,5 +1,22 @@
-deb_build/*
-.qmake.*
-*.deb
+# 构建产物
+out/
+release/
+
+# qmake 生成文件
 Makefile
-DualRecordService
+Makefile.Debug
+Makefile.Release
+.qmake.stash
+
+# IDE / 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db

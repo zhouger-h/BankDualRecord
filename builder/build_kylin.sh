@@ -3,6 +3,11 @@
 
 set -e
 
+# 切换到项目根目录（本脚本在 builder/ 下）
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.."
+echo "项目根目录: $(pwd)"
+echo ""
+
 echo "=========================================="
 echo "  银行柜面双录控件 - 麒麟编译脚本"
 echo "=========================================="
@@ -49,8 +54,7 @@ fi
 # 清理
 echo "[2/4] 清理旧文件..."
 rm -f Makefile Makefile.Debug Makefile.Release
-rm -f DualRecordService
-rm -rf build/
+rm -rf out/build/
 
 # 生成 Makefile（指定 release 模式）
 echo "[3/4] 生成 Makefile..."
@@ -66,12 +70,12 @@ echo "  编译完成!"
 echo "=========================================="
 echo ""
 echo "输出文件:"
-echo "  - 主程序: ./DualRecordService"
+echo "  - 主程序: out/linux/DualRecordService"
 echo ""
 echo "打包为 .deb 安装包（推荐）:"
-echo "  bash build_deb.sh"
+echo "  bash builder/build_deb.sh"
 echo ""
 echo "安装 .deb 包:"
-echo "  sudo dpkg -i dualrecord_1.0.0_amd64.deb"
+echo "  sudo dpkg -i release/dualrecord_1.0.0_amd64.deb"
 echo "  sudo apt-get install -f   # 自动补全依赖"
 echo ""

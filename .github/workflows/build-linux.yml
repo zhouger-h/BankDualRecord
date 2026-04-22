@@ -60,8 +60,8 @@ jobs:
           qmake DualRecordService.pro CONFIG+=release
           make -j$(nproc)
           echo "--- Binary info ---"
-          ls -lh DualRecordService
-          file DualRecordService
+          ls -lh out/linux/DualRecordService
+          file out/linux/DualRecordService
 
       # ── 5. 打包 .deb（复用 build_deb.sh，跳过编译步骤）─────
       #   build_deb.sh Step 1 会重新执行 qmake+make，
@@ -69,13 +69,13 @@ jobs:
       #   只执行打包部分。为保持脚本不变，允许脚本重新编译（幂等）。
       - name: Package .deb via build_deb.sh
         run: |
-          chmod +x build_deb.sh
-          bash build_deb.sh
+          chmod +x builder/build_deb.sh
+          bash builder/build_deb.sh
 
       # ── 6. 验证产物 ──────────────────────────────────────────
       - name: Verify .deb package
         run: |
-          DEB="${{ env.APP_NAME }}_${{ env.APP_VERSION }}_${{ env.APP_ARCH }}.deb"
+          DEB="release/${{ env.APP_NAME }}_${{ env.APP_VERSION }}_${{ env.APP_ARCH }}.deb"
           echo "=== Package Info ==="
           dpkg-deb --info "${DEB}"
           echo ""
@@ -90,7 +90,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dualrecord-linux-deb-${{ github.sha }}
-          path: ${{ env.APP_NAME }}_${{ env.APP_VERSION }}_${{ env.APP_ARCH }}.deb
+          path: release/${{ env.APP_NAME }}_${{ env.APP_VERSION }}_${{ env.APP_ARCH }}.deb
           retention-days: 30
 
       # ── 8. 发布 Release（仅推送 tag 时触发）─────────────────
@@ -98,7 +98,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ env.APP_NAME }}_${{ env.APP_VERSION }}_${{ env.APP_ARCH }}.deb
+          files: release/${{ env.APP_NAME }}_${{ env.APP_VERSION }}_${{ env.APP_ARCH }}.deb
           name: "银行柜面双录控件 ${{ github.ref_name }}"
           body: |
             ## 银行柜面双录控件 ${{ github.ref_name }} — Linux 版本

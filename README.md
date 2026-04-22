@@ -47,26 +47,32 @@ dual-record-system/demo/player.html  ← 独立播放器
 REM 需要安装 Qt 5.15.2 (MinGW 32-bit) + NSIS
 REM 打开 Qt 5.15.2 (MinGW 8.1.0 32-bit) 命令行
 cd dual-record-system
+
+REM 一键编译 + 打包（推荐）
+builder\build_windows.bat
+
+REM 或手动分步执行：
 qmake DualRecordService.pro
 mingw32-make release
 
-REM 编译完成后生成 release/DualRecordService.exe
+REM 编译完成后生成 out\windows\DualRecordService.exe
 ```
 
 **步骤2：打包安装程序**
 
 ```bat
-REM 使用NSIS编译安装脚本
-"C:\Program Files (x86)\NSIS\makensis.exe" installer\install_windows.nsi
+REM 使用NSIS编译安装脚本（输出到 release\ 目录）
+cd installer
+"C:\Program Files (x86)\NSIS\makensis.exe" install_windows.nsi
 
-REM 生成 BankDualRecord_Setup_v1.0.0_x86.exe
+REM 生成 release\BankDualRecord_Setup_v1.0.0_x86.exe
 ```
 
 **步骤3：安装运行**
 
 ```bat
 REM 以管理员身份运行生成的安装包
-BankDualRecord_Setup_v1.0.0_x86.exe
+release\BankDualRecord_Setup_v1.0.0_x86.exe
 ```
 
 ---
@@ -77,12 +83,21 @@ BankDualRecord_Setup_v1.0.0_x86.exe
 # 安装依赖
 sudo apt-get install qt5-default libqt5multimedia5-dev libssh2-1-dev openssl-dev
 
-# 编译
+# 编译（一键）
 cd dual-record-system
+builder/build_kylin.sh
+
+# 或手动编译
 qmake DualRecordService.pro
 make -j$(nproc)
+# 产物：out/linux/DualRecordService
 
-# 安装
+# 打包 .deb（产物输出到 release/）
+builder/build_deb.sh
+
+# 安装 deb 包
+sudo dpkg -i release/dualrecord_1.0.0_amd64.deb
+# 或使用一键安装脚本
 sudo bash installer/install_kylin.sh
 ```
 
@@ -118,26 +133,35 @@ dual-record-system/
 │   ├── TcpServer.{h,cpp}         # TCP通信服务
 │   ├── UploadManager.{h,cpp}     # FTP/SFTP上传管理
 │   ├── InitConfigDialog.{h,cpp}  # 初始化配置向导
-│   ├── AutoStartHelper.{h,cpp}   # 开机自启注册
 │   └── main.cpp                  # 程序入口
 ├── demo/                    # 演示程序 (C++/Qt + HTML)
 │   ├── DemoWindow.{h,cpp}        # Qt演示界面
 │   ├── index.html                # Web交互演示（可直接浏览器打开）
 │   └── demo_main.cpp
+├── builder/                 # 构建脚本
+│   ├── build_windows.bat         # Windows编译+打包
+│   ├── build_deb.sh              # Linux deb打包
+│   └── build_kylin.sh            # 麒麟编译脚本
 ├── installer/               # 安装脚本
 │   ├── install_windows.nsi       # NSIS Windows安装脚本
 │   └── install_kylin.sh          # 麒麟一键安装脚本
+├── icons/                   # 图标资源
+│   ├── win/icon.ico               # Windows图标
+│   ├── mac/icon.icns              # macOS图标
+│   └── png/                       # 多尺寸PNG图标
 ├── docs/                    # 文档
 │   ├── 设计文档.md
+│   ├── 编译说明.md
 │   └── API接口说明.md
-├── service/                 # 系统服务相关
-│   └── AutoStartHelper.{h,cpp}
+├── config/                  # 配置模板
+│   └── config.ini.template
 └── DualRecordService.pro    # Qt项目文件
 ```
 
 ## 📖 文档
 
 - [设计文档](docs/设计文档.md) — 架构设计、模块说明
+- [编译说明](docs/编译说明.md) — 编译部署指南
 - [API接口说明](docs/API接口说明.md) — TCP协议、命令参考
 - [Demo演示](demo/index.html) — 在浏览器中打开即可体验交互演示
 

@@ -13,11 +13,14 @@ APP_ARCH="amd64"
 MAINTAINER="SiroInfo <support@siro-info.com>"
 DESCRIPTION="银行柜面双录控件 - 基于Qt5/GStreamer的双路音视频录制服务"
 
+# 脚本所在目录（builder/），项目根目录为其上级
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DEB_ROOT="${SCRIPT_DIR}/deb_build"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+DEB_ROOT="${PROJECT_ROOT}/out/deb_build"
 PKG_DIR="${DEB_ROOT}/${APP_NAME}_${APP_VERSION}_${APP_ARCH}"
 INSTALL_DIR="${PKG_DIR}/opt/dualrecord"
-BINARY="${SCRIPT_DIR}/DualRecordService"
+BINARY="${PROJECT_ROOT}/out/linux/DualRecordService"
+RELEASE_DIR="${PROJECT_ROOT}/release"
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 info()    { echo -e "${GREEN}[INFO]${NC} $1"; }
@@ -32,14 +35,14 @@ echo ""
 
 # ── Step 1: 编译 ──────────────────────────────────────────────
 info "[1/5] 编译程序..."
-cd "${SCRIPT_DIR}"
+cd "${PROJECT_ROOT}"
 
 if ! command -v qmake &>/dev/null; then
-    error "未找到 qmake，请先运行 bash build_kylin.sh 安装依赖"
+    error "未找到 qmake，请先运行 bash builder/build_kylin.sh 安装依赖"
 fi
 
 rm -f Makefile DualRecordService
-rm -rf build/
+rm -rf out/build/
 qmake DualRecordService.pro CONFIG+=release
 make -j$(nproc)
 
@@ -71,7 +74,7 @@ cp -f "${BINARY}" "${INSTALL_DIR}/bin/DualRecordService"
 chmod +x "${INSTALL_DIR}/bin/DualRecordService"
 
 # 图标：自动从 icons/png/ 寻找各尺寸 PNG
-ICON_DIR="${SCRIPT_DIR}/icons/png"
+ICON_DIR="${PROJECT_ROOT}/icons/png"
 ICON_SIZES="16 24 32 48 64 128 256 512"
 ICON_FOUND=0
 for SIZE in ${ICON_SIZES}; do
@@ -292,7 +295,8 @@ chmod 755 "${PKG_DIR}/DEBIAN/postrm"
 # ── Step 5: 打包 .deb ─────────────────────────────────────────
 info "[5/5] 打包 .deb..."
 cd "${DEB_ROOT}"
-DEB_FILE="${SCRIPT_DIR}/${APP_NAME}_${APP_VERSION}_${APP_ARCH}.deb"
+mkdir -p "${RELEASE_DIR}"
+DEB_FILE="${RELEASE_DIR}/${APP_NAME}_${APP_VERSION}_${APP_ARCH}.deb"
 dpkg-deb --build "${PKG_DIR}" "${DEB_FILE}"
 
 echo ""
@@ -304,7 +308,7 @@ SIZE=$(du -sh "${DEB_FILE}" | cut -f1)
 echo "  大小:   ${SIZE}"
 echo ""
 echo "  安装命令:"
-echo "    sudo dpkg -i ${APP_NAME}_${APP_VERSION}_${APP_ARCH}.deb"
+echo "    sudo dpkg -i release/${APP_NAME}_${APP_VERSION}_${APP_ARCH}.deb"
 echo ""
 echo "  安装后若缺少依赖，执行:"
 echo "    sudo apt-get install -f"

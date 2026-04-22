@@ -6,21 +6,24 @@ CONFIG += c++17
 TARGET   = DualRecordService
 TEMPLATE = app
 
-# 编译产物输出目录：
-#   Linux/麒麟 → 项目根目录（make直接产生./DualRecordService）
-#   Windows    → release/ 子目录（配合 windeployqt 部署流程）
+# 编译产物统一输出到 out/ 目录：
+#   Linux/麒麟 → out/linux/
+#   Windows    → out/windows/
 linux {
-    DESTDIR     = $$PWD
+    DESTDIR     = $$PWD/out/linux
 }
-OBJECTS_DIR = $$PWD/build/obj
-MOC_DIR     = $$PWD/build/moc
-RCC_DIR     = $$PWD/build/rcc
-UI_DIR      = $$PWD/build/ui
+win32 {
+    DESTDIR     = $$PWD/out/windows
+}
+OBJECTS_DIR = $$PWD/out/build/obj
+MOC_DIR     = $$PWD/out/build/moc
+RCC_DIR     = $$PWD/out/build/rcc
+UI_DIR      = $$PWD/out/build/ui
 
 # 平台判断
 win32 {
     # Windows 32位
-    RC_ICONS = resources/app.ico
+    RC_ICONS = icons/win/icon.ico
     LIBS    += -lws2_32
     CONFIG  += win32_use_libssh2
     # 开机自启注册表写入
