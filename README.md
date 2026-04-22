@@ -2,6 +2,8 @@
 
 > 专为银行内网设计 · 无商业版权问题 · 支持 Windows 32位 + 银河麒麟信创
 
+[![Build Linux](https://github.com/zhouger-h/BankDualRecord/actions/workflows/build-linux.yml/badge.svg)](https://github.com/zhouger-h/BankDualRecord/actions/workflows/build-linux.yml)
+[![Build Windows](https://github.com/zhouger-h/BankDualRecord/actions/workflows/build-windows.yml/badge.svg)](https://github.com/zhouger-h/BankDualRecord/actions/workflows/build-windows.yml)
 [![许可证](https://img.shields.io/badge/业务代码-MIT-green)](LICENSE)
 [![Qt](https://img.shields.io/badge/Qt-LGPL_2.1-blue)](https://www.qt.io)
 [![平台](https://img.shields.io/badge/平台-Win32_|_麒麟-orange)]()
