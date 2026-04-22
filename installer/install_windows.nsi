@@ -14,6 +14,10 @@ InstallDir "${INSTALL_DIR}"
 RequestExecutionLevel admin
 SetCompressor /SOLID lzma
 
+; 安装程序图标
+!define MUI_ICON "icons\win\icon.ico"
+!define MUI_UNICON "icons\win\icon.ico"
+
 ;─────────────────────────────────────────
 ; 页面
 ;─────────────────────────────────────────
@@ -24,6 +28,7 @@ SetCompressor /SOLID lzma
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
 
+!insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 
 !insertmacro MUI_LANGUAGE "SimpChinese"
@@ -33,24 +38,37 @@ SetCompressor /SOLID lzma
 ;─────────────────────────────────────────
 Section "主程序" SecMain
     ; 若旧版本正在运行，先强制结束进程（重新安装场景）
-    ExecWait 'taskkill /F /IM "${EXE_NAME}"'
+    nsExec::ExecToLog 'taskkill /F /IM "${EXE_NAME}"'
     Sleep 800   ; 等待进程完全退出，避免文件被占用
 
     SetOutPath "${INSTALL_DIR}"
 
-    ; 程序文件
-    File "bin\DualRecordService.exe"
+    ; ── 程序文件（bin\ 目录由 build_windows.bat 通过 windeployqt 自动生成）──
+    ; EXE
+    File "bin\${EXE_NAME}"
+    ; Qt 核心依赖
     File "bin\Qt5Core.dll"
     File "bin\Qt5Gui.dll"
     File "bin\Qt5Widgets.dll"
     File "bin\Qt5Network.dll"
     File "bin\Qt5Multimedia.dll"
     File "bin\Qt5MultimediaWidgets.dll"
+    ; OpenSSL
     File "bin\libssl-1_1.dll"
     File "bin\libcrypto-1_1.dll"
-    File /r "bin\platforms\"
-    File /r "bin\imageformats\"
-    File /r "bin\audio\"
+    ; libssh2（SFTP 支持）
+    File "bin\libssh2.dll"
+    ; MinGW 运行时
+    File "bin\libgcc_s_dw2-1.dll"
+    File "bin\libstdc++-6.dll"
+    File "bin\libwinpthread-1.dll"
+    ; Qt 插件目录
+    File /r "bin\platforms\*.*"
+    File /r "bin\imageformats\*.*"
+    File /r "bin\audio\*.*"
+    File /r "bin\styles\*.*"
+    ; Qt 资源
+    File /r "bin\translations\*.*"
 
     ; 创建工作目录
     CreateDirectory "$PROFILE\BankDualRecord\videos"
@@ -66,12 +84,15 @@ Section "主程序" SecMain
     WriteRegStr   HKLM "${UNINSTALL_KEY}" "DisplayVersion"       "${APP_VERSION}"
     WriteRegStr   HKLM "${UNINSTALL_KEY}" "UninstallString"      "${INSTALL_DIR}\Uninstall.exe"
     WriteRegStr   HKLM "${UNINSTALL_KEY}" "Publisher"            "BankSystem"
+    WriteRegStr   HKLM "${UNINSTALL_KEY}" "InstallLocation"      "${INSTALL_DIR}"
+    WriteRegStr   HKLM "${UNINSTALL_KEY}" "DisplayIcon"          "${INSTALL_DIR}\${EXE_NAME}"
     WriteRegDWORD HKLM "${UNINSTALL_KEY}" "NoModify"             1
     WriteRegDWORD HKLM "${UNINSTALL_KEY}" "NoRepair"             1
+    WriteRegDWORD HKLM "${UNINSTALL_KEY}" "EstimatedSize"        50000
 
-    ; 开机自启 (当前用户)
+    ; 开机自启 (当前用户 Run 键)
     WriteRegStr HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" \
-        "${APP_NAME}" '"${INSTALL_DIR}\${EXE_NAME}"'
+        "BankDualRecord" '"${INSTALL_DIR}\${EXE_NAME}"'
 
     ; 创建桌面快捷方式
     CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "${INSTALL_DIR}\${EXE_NAME}" \
@@ -88,7 +109,6 @@ Section "主程序" SecMain
     WriteUninstaller "${INSTALL_DIR}\Uninstall.exe"
 
     ; 安装完成后立即启动程序（首次安装 / 重新安装 均自动拉起）
-    ; 用 Exec（异步）而非 ExecWait，避免安装程序等待业务进程退出
     Exec '"${INSTALL_DIR}\${EXE_NAME}"'
 SectionEnd
 
@@ -97,16 +117,20 @@ SectionEnd
 ;─────────────────────────────────────────
 Section "Uninstall"
     ; 停止进程
-    ExecWait 'taskkill /F /IM "${EXE_NAME}"'
+    nsExec::ExecToLog 'taskkill /F /IM "${EXE_NAME}"'
+    Sleep 500
 
-    ; 删除文件
+    ; 删除安装目录
     RMDir /r "${INSTALL_DIR}"
+
+    ; 删除用户数据目录（可选，保留配置）
+    ; RMDir /r "$PROFILE\BankDualRecord"
 
     ; 删除注册表
     DeleteRegKey HKLM "${REG_KEY}"
     DeleteRegKey HKLM "${UNINSTALL_KEY}"
     DeleteRegValue HKCU \
-        "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "${APP_NAME}"
+        "SOFTWARE\Microsoft\Windows\CurrentVersion\Run" "BankDualRecord"
 
     ; 删除快捷方式
     Delete "$DESKTOP\${APP_NAME}.lnk"
