@@ -10,7 +10,6 @@
 
 ; Base directory (parent of installer/)
 
-
 Name "${APP_NAME} v${APP_VERSION}"
 OutFile "BankDualRecord_Setup_v${APP_VERSION}_x86.exe"
 InstallDir "${INSTALL_DIR}"

@@ -97,13 +97,13 @@ echo ========================================================
 if not exist %NSIS_PATH% (
     echo [WARNING] NSIS not found at %NSIS_PATH%
     echo [INFO]    bin\ directory is ready. You can run NSIS manually.
-    echo [INFO]    Command: makensis.exe installer\install_windows.nsi
+    echo [INFO]    Command: makensis.exe install_windows.nsi
     goto :done
 )
 
 :: --- Run NSIS ---
 echo [4/4] Running NSIS...
-%NSIS_PATH% installer\install_windows.nsi
+%NSIS_PATH% install_windows.nsi
 if %errorlevel% neq 0 (
     echo [ERROR] NSIS packaging failed!
     exit /b 1
