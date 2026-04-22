@@ -5,8 +5,11 @@ echo  银行柜面双录控件 - Windows 32位编译脚本
 echo ==========================================
 echo.
 
+REM 设置 Qt 5.15.2 MinGW 32-bit 环境变量
+set PATH=C:\Qt\5.15.2\mingw81_32\bin;C:\Qt\Tools\mingw810_32\bin;%PATH%
+
 REM 检查 Qt 环境
-where qmake >nul 2>nul
+qmake --version >nul 2>nul
 if %errorlevel% neq 0 (
     echo [错误] 未找到 qmake，请确保已安装 Qt 5.15.2 (MinGW 32-bit)
     echo.
