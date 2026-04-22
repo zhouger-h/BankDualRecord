@@ -22,6 +22,12 @@ echo ========================================================
 echo  Phase 1: Building DualRecordService (Release)
 echo ========================================================
 
+:: --- Clean old build artifacts (avoid format mismatch) ---
+if exist build rmdir /s /q build
+if exist Makefile del Makefile
+if exist Makefile.Debug del Makefile.Debug
+if exist Makefile.Release del Makefile.Release
+
 :: --- Ensure resources directory ---
 if not exist resources mkdir resources
 if not exist resources\app.ico copy icons\win\icon.ico resources\app.ico >nul 2>nul
