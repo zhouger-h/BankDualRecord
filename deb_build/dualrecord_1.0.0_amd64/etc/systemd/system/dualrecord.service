@@ -1,0 +1,18 @@
+[Unit]
+Description=Bank Counter Dual Recording Service
+After=network.target graphical-session.target
+Wants=graphical-session.target
+
+[Service]
+Type=simple
+User=DUALRECORD_USER
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=DUALRECORD_HOME/.Xauthority
+ExecStart=/opt/dualrecord/bin/DualRecordService
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=graphical.target

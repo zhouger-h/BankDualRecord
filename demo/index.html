@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>银行柜面双录控件 — 演示系统 v2.1</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{
+    --primary:#1a56db;--primary-dk:#1340a8;
+    --danger:#dc2626;--danger-dk:#b91c1c;
+    --warn:#d97706;--warn-dk:#b45309;
+    --success:#059669;--success-dk:#047857;
+    --purple:#7c3aed;
+    --bg:#f3f4f8;--card:#fff;--border:#e2e5ec;
+    --text:#1f2937;--text2:#6b7280;--radius:10px;
+  }
+  body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* ===== 顶栏 ===== */
+  .topbar{
+    background:linear-gradient(135deg,#0d2b6e 0%,#1a56db 100%);
+    color:#fff;padding:0 28px;height:56px;
+    display:flex;align-items:center;justify-content:space-between;
+    box-shadow:0 2px 12px rgba(26,86,219,.25);
+  }
+  .topbar-left{display:flex;align-items:center;gap:12px;}
+  .topbar-logo{font-size:20px;font-weight:700;letter-spacing:1px;}
+  .topbar-sub{font-size:12px;opacity:.75;background:rgba(255,255,255,.15);padding:2px 8px;border-radius:10px;}
+  .topbar-right{display:flex;align-items:center;gap:14px;font-size:13px;}
+  .tbtn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;
+    padding:5px 14px;border-radius:6px;cursor:pointer;font-size:13px;transition:background .2s;}
+  .tbtn:hover{background:rgba(255,255,255,.28);}
+
+  /* ===== 主布局 ===== */
+  .wrap{display:grid;grid-template-columns:1fr 310px;gap:18px;padding:18px 22px;
+    max-width:1400px;margin:0 auto;}
+
+  /* ===== 卡片 ===== */
+  .card{background:var(--card);border-radius:var(--radius);
+    box-shadow:0 1px 4px rgba(0,0,0,.07);border:1px solid var(--border);overflow:hidden;}
+  .card-hd{padding:13px 18px;background:#f9fafb;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;}
+  .card-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px;}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--primary);}
+  .card-bd{padding:16px 18px;}
+
+  /* ===== 视频区 ===== */
+  .video-wrap{
+    position:relative;background:#0a0e1a;border-radius:8px;overflow:hidden;
+    aspect-ratio:16/9;width:100%;display:flex;align-items:center;justify-content:center;
+  }
+  #liveVideo{width:100%;height:100%;object-fit:cover;display:block;}
+  .v-placeholder{
+    position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;color:#6b7280;gap:10px;
+    pointer-events:none;transition:opacity .3s;
+  }
+  .v-placeholder .icon{font-size:52px;opacity:.3;}
+  .v-placeholder p{font-size:13px;opacity:.6;}
+  .v-placeholder.hide{opacity:0;}
+  /* REC角标 */
+  .rec-badge{position:absolute;top:10px;left:10px;background:rgba(220,38,38,.92);
+    color:#fff;font-size:12px;font-weight:600;padding:3px 9px;border-radius:20px;
+    display:none;align-items:center;gap:5px;}
+  .rec-badge.show{display:flex;}
+  .rec-dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:blink 1s infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+  /* 计时 */
+  .rec-time{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.55);color:#fff;
+    font-size:13px;font-family:Consolas,monospace;padding:3px 10px;border-radius:6px;display:none;}
+  .rec-time.show{display:block;}
+  /* 音量 */
+  .vol-wrap{position:absolute;bottom:10px;left:10px;right:10px;height:4px;
+    background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden;display:none;}
+  .vol-wrap.show{display:block;}
+  .vol-bar{height:100%;background:#34d399;width:0%;transition:width .1s;border-radius:2px;}
+
+  /* ===== 设备选择 ===== */
+  .dev-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px;}
+  .fg label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px;font-weight:500;}
+  .fg select{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;
+    font-size:12px;background:#fff;color:var(--text);outline:none;cursor:pointer;transition:border-color .2s;}
+  .fg select:focus{border-color:var(--primary);}
+
+  /* ===== 控制按钮 ===== */
+  .ctrl-row{display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border-radius:8px;
+    font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .18s;white-space:nowrap;}
+  .btn:active{transform:scale(.96);}
+  .btn:disabled{opacity:.38;cursor:not-allowed;pointer-events:none;}
+  .btn-primary{background:var(--primary);color:#fff;}
+  .btn-primary:hover{background:var(--primary-dk);}
+  .btn-danger{background:var(--danger);color:#fff;}
+  .btn-danger:hover{background:var(--danger-dk);}
+  .btn-warn{background:var(--warn);color:#78350f;}
+  .btn-warn:hover{background:var(--warn-dk);}
+  .btn-purple{background:var(--purple);color:#fff;}
+  .btn-purple:hover{background:#6d28d9;}
+  .btn-outline{background:transparent;color:var(--primary);border:1.5px solid var(--primary);}
+  .btn-outline:hover{background:#eff6ff;}
+  .btn-lg{padding:12px 28px;font-size:15px;}
+
+  /* ===== 文件列表 ===== */
+  .file-list{max-height:260px;overflow-y:auto;}
+  .file-item{
+    display:flex;align-items:center;padding:10px 12px;border-radius:7px;
+    gap:10px;transition:background .15s;border-bottom:1px solid #f3f4f6;
+  }
+  .file-item:hover{background:#f0f4ff;}
+  .file-icon{font-size:20px;flex-shrink:0;}
+  .file-info{flex:1;overflow:hidden;}
+  .file-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .file-meta{font-size:11px;color:var(--text2);margin-top:2px;}
+  .file-actions{display:flex;gap:6px;flex-shrink:0;}
+  .fplay-btn{
+    background:var(--primary);color:#fff;border:none;border-radius:6px;
+    padding:5px 12px;font-size:12px;cursor:pointer;font-weight:600;transition:background .15s;
+  }
+  .fplay-btn:hover{background:var(--primary-dk);}
+  .empty-hint{text-align:center;padding:32px 0;color:var(--text2);font-size:13px;}
+
+  /* ===== 右侧面板 ===== */
+  .right{display:flex;flex-direction:column;gap:16px;}
+  .status-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .st-item{background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
+  .st-label{font-size:11px;color:var(--text2);margin-bottom:4px;}
+  .st-val{font-size:13px;font-weight:700;}
+  .st-idle{color:#6b7280;}
+  .st-recording{color:#dc2626;}
+  .st-paused{color:var(--warn);}
+  .st-online{color:var(--success);}
+
+  /* 上传 */
+  .upl-item{padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:12px;}
+  .upl-item:last-child{border-bottom:none;}
+  .upl-name{font-weight:600;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .upl-prog{height:5px;background:#e5e7eb;border-radius:3px;overflow:hidden;margin:4px 0;}
+  .upl-bar{height:100%;background:linear-gradient(90deg,var(--primary),#60a5fa);border-radius:3px;transition:width .4s;}
+  .upl-ft{display:flex;justify-content:space-between;color:var(--text2);}
+  .upl-pct{color:var(--primary);font-weight:600;}
+
+  /* TCP日志 */
+  .tcp-log{background:#0d1117;color:#c9d1d9;font-size:11px;font-family:Consolas,monospace;
+    border-radius:8px;padding:10px 12px;height:140px;overflow-y:auto;line-height:1.8;}
+  .tcp-log .send{color:#79c0ff;}
+  .tcp-log .recv{color:#7ee787;}
+  .tcp-log .sys{color:#f0883e;}
+  .tcp-log .err{color:#f85149;}
+
+  /* ===== 弹窗 ===== */
+  .mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
+    backdrop-filter:blur(3px);z-index:999;align-items:center;justify-content:center;}
+  .mask.show{display:flex;}
+  .modal{background:var(--card);border-radius:14px;max-width:95vw;max-height:92vh;
+    overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:popIn .22s ease;}
+  @keyframes popIn{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+  .mhd{padding:16px 22px 13px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;}
+  .mtitle{font-size:16px;font-weight:700;}
+  .mclose{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);padding:2px 6px;border-radius:6px;}
+  .mclose:hover{background:#f3f4f6;}
+  .mbd{padding:18px 22px;}
+  .mft{padding:13px 22px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;}
+
+  .fr{margin-bottom:13px;}
+  .fr label{display:block;font-size:13px;font-weight:600;margin-bottom:5px;}
+  .fr input,.fr select{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;
+    font-size:13px;outline:none;transition:border-color .2s;}
+  .fr input:focus,.fr select:focus{border-color:var(--primary);}
+  .fr-desc{font-size:11px;color:var(--text2);margin-top:3px;}
+  .sep{font-size:12px;font-weight:700;color:var(--primary);margin:16px 0 11px;
+    display:flex;align-items:center;gap:8px;}
+  .sep::after{content:'';flex:1;height:1px;background:#dbeafe;}
+  .fr2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+  /* 播放弹窗 */
+  #playerModal .modal{width:720px;}
+  #playerVideo{width:100%;border-radius:8px;background:#000;max-height:380px;}
+
+  /* 接口文档弹窗 */
+  #apiModal .modal{width:660px;}
+  .api-block{background:#f8faff;border:1px solid #dbeafe;border-radius:8px;padding:12px 14px;margin-bottom:12px;}
+  .api-block-title{font-size:12px;font-weight:700;color:var(--primary);margin-bottom:6px;}
+  pre{font-size:12px;color:#374151;line-height:1.8;font-family:Consolas,monospace;white-space:pre-wrap;}
+
+  /* badge */
+  .badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:600;}
+  .badge-blue{background:#dbeafe;color:#1d4ed8;}
+  .badge-green{background:#d1fae5;color:#065f46;}
+  .badge-gray{background:#f3f4f6;color:#6b7280;}
+  .badge-red{background:#fee2e2;color:#991b1b;}
+
+  @media(max-width:900px){
+    .wrap{grid-template-columns:1fr;}
+    .dev-grid{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+
+<!-- 顶栏 -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-logo">🎬 双录控件</div>
+    <span class="topbar-sub">银行柜面双录系统 v2.1</span>
+  </div>
+  <div class="topbar-right">
+    <span id="tcpStatus" class="badge badge-gray">● TCP 未连接</span>
+    <button class="tbtn" onclick="openConfig()">⚙ 参数配置</button>
+    <button class="tbtn" onclick="openApi()">📄 接口文档</button>
+    <button class="tbtn" onclick="openPlayerModal()">▶ 文件播放</button>
+  </div>
+</div>
+
+<!-- 主内容 -->
+<div class="wrap">
+
+  <!-- 左侧 -->
+  <div style="display:flex;flex-direction:column;gap:18px;">
+
+    <!-- 摄像头预览 -->
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title"><div class="dot"></div>摄像头预览</div>
+        <div id="camState" class="badge badge-gray">摄像头未开启</div>
+      </div>
+      <div class="card-bd" style="padding:14px 16px;">
+        <div class="video-wrap">
+          <video id="liveVideo" autoplay playsinline muted></video>
+          <div class="v-placeholder" id="vPlaceholder">
+            <div class="icon">📷</div>
+            <p>点击「开始录制」开启摄像头</p>
+          </div>
+          <div class="rec-badge" id="recBadge"><div class="rec-dot"></div>REC</div>
+          <div class="rec-time" id="recTime">00:00:00</div>
+          <div class="vol-wrap" id="volWrap"><div class="vol-bar" id="volBar"></div></div>
+        </div>
+
+        <!-- 设备选择（空闲时可切换） -->
+        <div class="dev-grid">
+          <div class="fg"><label>📷 摄像头</label><select id="selCam"><option>检测中…</option></select></div>
+          <div class="fg"><label>🎤 麦克风</label><select id="selMic"><option>检测中…</option></select></div>
+          <div class="fg">
+            <label>📐 分辨率</label>
+            <select id="selRes">
+              <option value="1280x720">1280×720 (HD)</option>
+              <option value="1920x1080">1920×1080 (FHD)</option>
+              <option value="640x480">640×480 (SD)</option>
+              <option value="320x240">320×240 (低码率)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 控制按钮：开始/停止 + 暂停/继续 + 切换摄像头 -->
+        <div class="ctrl-row">
+          <!-- 开始录制 / 停止录制 合一 -->
+          <button class="btn btn-primary btn-lg" id="btnRecord" onclick="toggleRecord()">
+            <span id="recIcon">⏺</span> <span id="recTxt">开始录制</span>
+          </button>
+          <!-- 暂停 / 继续 合一（录制中才启用） -->
+          <button class="btn btn-warn btn-lg" id="btnPause" onclick="togglePause()" disabled>
+            <span id="pauseIcon">⏸</span> <span id="pauseTxt">暂停</span>
+          </button>
+          <div style="flex:1"></div>
+          <button class="btn btn-outline" id="btnSwitch" onclick="switchCamera()">
+            🔄 切换摄像头
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 录制文件列表（每项内嵌播放按钮，无全局删除） -->
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title"><div class="dot"></div>录制文件</div>
+        <span id="fileCount" class="badge badge-gray">0 个文件</span>
+      </div>
+      <div class="card-bd" style="padding:8px 10px;">
+        <div class="file-list" id="fileList">
+          <div class="empty-hint">暂无录制文件，开始录制后自动保存</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右侧面板 -->
+  <div class="right">
+
+    <!-- 运行状态 -->
+    <div class="card">
+      <div class="card-hd"><div class="card-title"><div class="dot"></div>运行状态</div></div>
+      <div class="card-bd" style="padding:10px 12px;">
+        <div class="status-grid">
+          <div class="st-item"><div class="st-label">录制状态</div><div class="st-val st-idle" id="stRec">空闲</div></div>
+          <div class="st-item"><div class="st-label">上传状态</div><div class="st-val st-idle" id="stUpload">待机</div></div>
+          <div class="st-item"><div class="st-label">本地缓存</div><div class="st-val" id="stCache">—</div></div>
+          <div class="st-item"><div class="st-label">上传路径</div><div class="st-val" id="stFtp">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 上传队列 -->
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title"><div class="dot"></div>上传队列</div>
+        <button class="btn btn-outline" style="padding:3px 9px;font-size:12px;" onclick="simUpload()">模拟上传</button>
+      </div>
+      <div class="card-bd" style="padding:8px 12px;">
+        <div id="uploadQueue"><div class="empty-hint">队列为空</div></div>
+      </div>
+    </div>
+
+    <!-- TCP通信日志 -->
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title"><div class="dot"></div>TCP 通信日志</div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-outline" style="padding:3px 8px;font-size:11px;" onclick="toggleTcp()">连接</button>
+          <button class="btn btn-outline" style="padding:3px 8px;font-size:11px;" onclick="clearLog()">清空</button>
+        </div>
+      </div>
+      <div class="card-bd" style="padding:8px;">
+        <div class="tcp-log" id="tcpLog">
+          <div class="sys">[系统] 双录控件演示程序就绪，等待TCP连接…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 接口快速测试 -->
+    <div class="card">
+      <div class="card-hd"><div class="card-title"><div class="dot"></div>接口快速测试</div></div>
+      <div class="card-bd" style="padding:8px 12px;display:flex;flex-direction:column;gap:7px;">
+        <button class="btn btn-outline" style="font-size:12px;justify-content:flex-start;" onclick="sendCmd('STATUS',{})">📡 STATUS — 查询状态</button>
+        <button class="btn btn-outline" style="font-size:12px;justify-content:flex-start;" onclick="sendCmd('SHOW_WINDOW',{file_name:'T'+Date.now()+'_演示客户.mp4'})">🪟 SHOW_WINDOW — 吊起界面（含文件名）</button>
+        <button class="btn btn-outline" style="font-size:12px;justify-content:flex-start;" onclick="sendCmd('START',{task_id:'T'+Date.now(),cust_name:'演示客户',file_name:'T'+Date.now()+'_演示客户.mp4'})">▶ START — 开始录制（含文件名）</button>
+        <button class="btn btn-outline" style="font-size:12px;justify-content:flex-start;" onclick="sendCmd('PAUSE',{})">⏸ PAUSE — 暂停录制</button>
+        <button class="btn btn-outline" style="font-size:12px;justify-content:flex-start;" onclick="sendCmd('RESUME',{})">▶▶ RESUME — 继续录制</button>
+        <button class="btn btn-outline" style="font-size:12px;justify-content:flex-start;" onclick="sendCmd('STOP',{})">⏹ STOP — 停止录制</button>
+        <button class="btn btn-outline" style="font-size:12px;justify-content:flex-start;" onclick="sendCmd('PLAY',{file_path:'D:\\\\DualRecord\\\\REC_T001_20260331.mp4'})">▶ PLAY — 播放指定文件</button>
+        <button class="btn btn-outline" style="font-size:12px;justify-content:flex-start;" onclick="sendCmd('LIST',{})">📋 LIST — 获取视频列表</button>
+        <button class="btn btn-outline" style="font-size:12px;justify-content:flex-start;" onclick="sendCmd('HIDE_WINDOW',{})">🚪 HIDE_WINDOW — 隐藏界面（清除文件名）</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 参数配置弹窗 ===== -->
+<div class="mask" id="configModal">
+  <div class="modal" style="width:560px;">
+    <div class="mhd"><div class="mtitle">⚙ 参数配置</div><button class="mclose" onclick="closeM('configModal')">✕</button></div>
+    <div class="mbd">
+      <div class="sep">基础配置</div>
+      <div class="fr">
+        <label>影像缓存路径</label>
+        <input type="text" id="cfgCache" value="D:\DualRecord\Cache"/>
+        <div class="fr-desc">视频录制完成后保存到此目录，上传成功后自动删除本地文件</div>
+      </div>
+      <div class="fr2">
+        <div class="fr" style="margin:0"><label>TCP 监听端口</label><input type="number" id="cfgPort" value="9527" min="1024" max="65535"/></div>
+        <div class="fr" style="margin:0"><label>上传带宽限制 (KB/s)</label><input type="number" id="cfgBw" value="1024" min="64"/></div>
+      </div>
+      <div class="sep">上传服务器</div>
+      <div class="fr">
+        <label>协议类型</label>
+        <select id="cfgProto" onchange="onProtoChange()">
+          <option value="ftp">FTP</option>
+          <option value="sftp" selected>SFTP（推荐）</option>
+        </select>
+      </div>
+      <div class="fr2">
+        <div class="fr" style="margin:0"><label>服务器地址</label><input type="text" id="cfgHost" value="192.168.1.100"/></div>
+        <div class="fr" style="margin:0"><label>端口</label><input type="number" id="cfgFtpPort" value="22"/></div>
+      </div>
+      <div class="fr2">
+        <div class="fr" style="margin:0"><label>用户名</label><input type="text" id="cfgUser" value="ftpuser"/></div>
+        <div class="fr" style="margin:0"><label>密码</label><input type="password" id="cfgPass" value=""/></div>
+      </div>
+      <div class="fr"><label>远程上传路径</label><input type="text" id="cfgRemote" value="/upload/video/"/></div>
+      <div class="fr2">
+        <div class="fr" style="margin:0"><label>最大重试次数</label><input type="number" id="cfgRetry" value="5" min="1" max="20"/></div>
+        <div class="fr" style="margin:0"><label>重试间隔 (秒)</label><input type="number" id="cfgRetryInt" value="30" min="5"/></div>
+      </div>
+    </div>
+    <div class="mft">
+      <button class="btn btn-outline" onclick="closeM('configModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveConfig()">💾 保存配置</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 视频播放弹窗（独立播放器，需求8）===== -->
+<div class="mask" id="playerModal">
+  <div class="modal" style="width:720px;">
+    <div class="mhd"><div class="mtitle">▶ 视频播放器</div><button class="mclose" onclick="closeM('playerModal')">✕</button></div>
+    <div class="mbd">
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <input type="text" id="playerPath" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;" placeholder="输入视频绝对路径，或从下方列表选择…"/>
+        <button class="btn btn-primary" onclick="loadPlayer()">载入</button>
+      </div>
+      <video id="playerVideo" controls style="width:100%;border-radius:8px;background:#000;max-height:360px;"></video>
+      <div style="margin-top:12px;">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:600;">最近录制文件：</div>
+        <div id="playerList" style="max-height:110px;overflow-y:auto;"></div>
+      </div>
+      <div style="margin-top:12px;background:#f8faff;border:1px solid #dbeafe;border-radius:8px;padding:11px 13px;">
+        <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:5px;">柜面调用播放接口 (TCP)：</div>
+        <pre>// 向控件发送 PLAY 命令，file_path 为视频绝对路径
+{ "cmd": "PLAY", "params": { "file_path": "D:\\DualRecord\\REC_T001_20260331_143020.mp4" } }</pre>
+      </div>
+    </div>
+    <div class="mft"><button class="btn btn-outline" onclick="closeM('playerModal')">关闭</button></div>
+  </div>
+</div>
+
+<!-- ===== 接口文档弹窗 ===== -->
+<div class="mask" id="apiModal">
+  <div class="modal" style="width:680px;">
+    <div class="mhd"><div class="mtitle">📄 TCP 接口说明</div><button class="mclose" onclick="closeM('apiModal')">✕</button></div>
+    <div class="mbd">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:14px;">
+        协议格式：<code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">4字节大端长度 + JSON Body</code>，
+        端口默认 <strong>9527</strong>（可配置）
+      </div>
+
+      <div class="api-block">
+        <div class="api-block-title">▶ START — 开始录制（file_name 可选）</div>
+        <pre>// 请求（file_name 可选，不传时按默认规则生成文件名）
+{ "cmd": "START", "params": { "task_id": "T20260331001", "cust_name": "张三", "file_name": "T20260331001_张三.mp4" } }
+
+// 响应（file_name 原样回显；未传时为 null）
+{ "code": 0, "msg": "录制已启动", "task_id": "T20260331001", "file_name": "T20260331001_张三.mp4" }
+
+// 主动事件（摄像头就绪后推送，含最终文件完整路径）
+{ "type": "event", "event": "RECORD_STARTED", "data": { "task_id": "T20260331001", "file_path": "D:\\DualRecord\\T20260331001_张三.mp4" } }</pre>
+      </div>
+
+      <div class="api-block">
+        <div class="api-block-title">🪟 SHOW_WINDOW — 吊起界面（file_name 可选）</div>
+        <pre>// 请求（可在吊起时预设录制文件名，操作员点「开始录制」时自动使用）
+{ "cmd": "SHOW_WINDOW", "params": { "file_name": "T20260331001_张三.mp4" } }
+
+// 响应
+{ "code": 0, "msg": "主界面已显示", "file_name": "T20260331001_张三.mp4" }
+
+// 清除时机：关闭界面按钮、右上角叉、HIDE_WINDOW 命令均会清除预设文件名</pre>
+      </div>
+
+      <div class="api-block">
+        <div class="api-block-title">🚪 HIDE_WINDOW — 隐藏界面（自动清除预设文件名）</div>
+        <pre>{ "cmd": "HIDE_WINDOW", "params": {} }
+// 响应: { "code": 0, "msg": "主界面已隐藏" }
+// 副作用: 自动清除 m_pendingFileName，下次吊起需重新传入 file_name</pre>
+      </div>
+
+      <div class="api-block">
+        <div class="api-block-title">⏸ PAUSE / ▶▶ RESUME — 暂停 / 继续</div>
+        <pre>发送: { "cmd": "PAUSE",  "params": {} }
+发送: { "cmd": "RESUME", "params": {} }
+返回: { "code": 0, "msg": "录制已暂停" }  /  { "code": 0, "msg": "录制已继续" }</pre>
+      </div>
+
+      <div class="api-block">
+        <div class="api-block-title">⏹ STOP — 停止录制（自动关闭摄像头 + 入上传队列）</div>
+        <pre>发送: { "cmd": "STOP", "params": {} }
+返回: { "code": 0, "msg": "录制已停止", "file_path": "D:\\DualRecord\\REC_T001_xxx.mp4" }
+事件推送: { "type": "event", "event": "RECORD_STOPPED", "data": { "task_id":"...", "file_path":"..." } }</pre>
+      </div>
+
+      <div class="api-block">
+        <div class="api-block-title">▶ PLAY — 播放指定视频（弹出独立播放器窗口）</div>
+        <pre>发送: { "cmd": "PLAY", "params": { "file_path": "D:\\DualRecord\\REC_xxx.mp4" } }
+返回: { "code": 0, "msg": "播放器已启动", "file_path": "..." }</pre>
+      </div>
+
+      <div class="api-block">
+        <div class="api-block-title">📋 LIST / 📡 STATUS / 🏓 PING</div>
+        <pre>LIST   → { "code":0, "msg":"OK", "list": [{"name":"...","path":"...","size":1024,"modified":"..."},...] }
+STATUS → { "code":0, "msg":"OK", "data": { "state":"IDLE|RECORDING|PAUSED|STOPPED", "file_path":"" } }
+PING   → { "code":0, "msg":"pong", "ts": 1711859400000 }</pre>
+      </div>
+
+      <div class="api-block">
+        <div class="api-block-title">☁ 上传事件（主动推送）</div>
+        <pre>上传进度: { "type":"event","event":"UPLOAD_PROGRESS","data":{"file_path":"...","sent":102400,"total":5120000} }
+上传完成: { "type":"event","event":"UPLOAD_DONE","data":{"file_path":"...","status":"success"} }
+上传失败: { "type":"event","event":"UPLOAD_FAILED","data":{"file_path":"...","error":"..."} }</pre>
+      </div>
+
+      <div class="api-block">
+        <div class="api-block-title">🔧 C++ 集成示例（柜面端）</div>
+        <pre>// 1. 连接控件服务
+QTcpSocket *sock = new QTcpSocket;
+sock->connectToHost("127.0.0.1", 9527);
+
+// 2. 封帧发送
+auto send = [&](const QJsonObject &cmd){
+    QByteArray body = QJsonDocument(cmd).toJson(QJsonDocument::Compact);
+    quint32 len = body.size();
+    QByteArray frame(4, 0);
+    frame[0]=(len>>24)&0xFF; frame[1]=(len>>16)&0xFF;
+    frame[2]=(len>>8 )&0xFF; frame[3]=len&0xFF;
+    sock->write(frame + body);
+};
+
+// 3. 吊起界面并预设文件名（用户点「开始录制」将使用该文件名）
+send({{"cmd","SHOW_WINDOW"},{"params",QJsonObject{{"file_name","T001_张三.mp4"}}}});
+
+// 4. 或直接通过 START 指定文件名（同时触发录制）
+send({{"cmd","START"},{"params",QJsonObject{{"task_id","T001"},{"cust_name","张三"},{"file_name","T001_张三.mp4"}}}});
+
+// 5. 停止录制
+send({{"cmd","STOP"},{"params",QJsonObject{}}});
+
+// 6. 播放指定文件
+send({{"cmd","PLAY"},{"params",QJsonObject{{"file_path","D:\\DualRecord\\T001_张三.mp4"}}}});</pre>
+      </div>
+    </div>
+    <div class="mft"><button class="btn btn-outline" onclick="closeM('apiModal')">关闭</button></div>
+  </div>
+</div>
+
+<!-- ===== JS ===== -->
+<script>
+// ===== 状态 =====
+let stream=null, mr=null, chunks=[], isRec=false, isPaused=false;
+let timerIv=null, seconds=0;
+let audioCtx=null, analyser=null, volIv=null;
+let files=[];
+let camList=[], micList=[], camIdx=0;
+let tcpConn=false;
+let pendingFileName='';  // 吊起时预设的录制文件名（对应 m_pendingFileName）
+let cfg={
+  cachePath:'D:\\DualRecord\\Cache', port:9527, bw:1024,
+  proto:'sftp', host:'192.168.1.100', ftpPort:22, user:'ftpuser', pass:'',
+  remote:'/upload/video/', retry:5, retryInt:30
+};
+
+// ===== 初始化 =====
+window.addEventListener('DOMContentLoaded', async()=>{
+  log('sys','系统启动，枚举媒体设备…');
+  updateStatusBar();
+  await initDevices();
+  // 设备切换（空闲时才生效）
+  ['selCam','selMic','selRes'].forEach(id=>{
+    document.getElementById(id).addEventListener('change', ()=>{
+      if(!isRec) log('sys','设备参数已更新，下次录制生效');
+    });
+  });
+});
+
+async function initDevices(){
+  const selC=document.getElementById('selCam'), selM=document.getElementById('selMic');
+  try{
+    const tmp=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
+    tmp.getTracks().forEach(t=>t.stop());
+    const devs=await navigator.mediaDevices.enumerateDevices();
+    camList=devs.filter(d=>d.kind==='videoinput');
+    micList=devs.filter(d=>d.kind==='audioinput');
+    selC.innerHTML=camList.length
+      ?camList.map((d,i)=>`<option value="${d.deviceId}">${d.label||'摄像头 '+(i+1)}</option>`).join('')
+      :'<option value="">未检测到摄像头</option>';
+    selM.innerHTML=micList.length
+      ?micList.map((d,i)=>`<option value="${d.deviceId}">${d.label||'麦克风 '+(i+1)}</option>`).join('')
+      :'<option value="">未检测到麦克风</option>';
+    log('sys',`枚举完成：${camList.length} 个摄像头，${micList.length} 个麦克风`);
+    log('sys','摄像头待机，点击「开始录制」开启');
+  }catch(e){
+    selC.innerHTML='<option value="">需要摄像头权限</option>';
+    selM.innerHTML='<option value="">需要麦克风权限</option>';
+    log('err','设备枚举失败: '+e.message);
+  }
+}
+
+// 打开摄像头（录制前调用）
+async function openCamera(){
+  const camId=document.getElementById('selCam').value;
+  const micId=document.getElementById('selMic').value;
+  const [w,h]=document.getElementById('selRes').value.split('x').map(Number);
+  const constraints={
+    video: camId?{deviceId:{exact:camId},width:{ideal:w},height:{ideal:h}}:{width:{ideal:w},height:{ideal:h}},
+    audio: micId?{deviceId:{exact:micId}}:true
+  };
+  try{
+    stream=await navigator.mediaDevices.getUserMedia(constraints);
+    document.getElementById('liveVideo').srcObject=stream;
+    document.getElementById('vPlaceholder').classList.add('hide');
+    setCamState('badge-green','摄像头已开启');
+    startVolMeter();
+    log('sys',`摄像头已开启 ${w}×${h}`);
+    return true;
+  }catch(e){
+    setCamState('badge-gray','摄像头开启失败');
+    log('err','摄像头开启失败: '+e.message);
+    return false;
+  }
+}
+
+// 关闭摄像头（停止录制后调用）
+function closeCamera(){
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+  if(volIv){clearInterval(volIv);volIv=null;}
+  if(audioCtx){audioCtx.close().catch(()=>{});audioCtx=null;}
+  document.getElementById('liveVideo').srcObject=null;
+  document.getElementById('vPlaceholder').classList.remove('hide');
+  document.getElementById('vPlaceholder').querySelector('p').textContent='点击「开始录制」开启摄像头';
+  document.getElementById('volWrap').classList.remove('show');
+  setCamState('badge-gray','摄像头已关闭');
+  log('sys','摄像头已关闭');
+}
+
+function setCamState(cls,txt){
+  const el=document.getElementById('camState');
+  el.className='badge '+cls;el.textContent=txt;
+}
+
+// ===== 「开始/停止录制」合一按钮 =====
+async function toggleRecord(){
+  if(!isRec){
+    // ── 开始录制 ──
+    const ok=await openCamera();
+    if(!ok){alert('摄像头开启失败，请检查设备权限');return;}
+    chunks=[];
+    const mime=getMime();
+    mr=new MediaRecorder(stream,{mimeType:mime});
+    mr.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data);};
+    mr.onstop=onRecStop;
+    mr.start(200);
+    isRec=true;isPaused=false;
+    seconds=0;startTimer();
+    // 按钮变「停止录制」
+    document.getElementById('btnRecord').className='btn btn-danger btn-lg';
+    document.getElementById('recIcon').textContent='⏹';
+    document.getElementById('recTxt').textContent='停止录制';
+    document.getElementById('btnPause').disabled=false;
+    document.getElementById('recBadge').classList.add('show');
+    document.getElementById('recTime').classList.add('show');
+    // 设备选择器禁用
+    ['selCam','selMic','selRes','btnSwitch'].forEach(id=>{
+      const el=document.getElementById(id);if(el)el.disabled=true;
+    });
+    setSt('stRec','录制中','st-recording');
+    log('send','{"cmd":"START_ACK","status":"recording"}');
+  }else{
+    // ── 停止录制 ──
+    if(mr)mr.stop();
+    isRec=false;isPaused=false;
+    stopTimer();
+    document.getElementById('btnRecord').className='btn btn-primary btn-lg';
+    document.getElementById('recIcon').textContent='⏺';
+    document.getElementById('recTxt').textContent='开始录制';
+    document.getElementById('btnPause').disabled=true;
+    document.getElementById('btnPause').querySelector('#pauseIcon').textContent='⏸';
+    document.getElementById('btnPause').querySelector('#pauseTxt').textContent='暂停';
+    document.getElementById('btnPause').className='btn btn-warn btn-lg';
+    document.getElementById('recBadge').classList.remove('show');
+    // 设备选择器恢复
+    ['selCam','selMic','selRes','btnSwitch'].forEach(id=>{
+      const el=document.getElementById(id);if(el)el.disabled=false;
+    });
+    setSt('stRec','保存中…','st-idle');
+    log('send','{"cmd":"STOP_ACK","status":"saving"}');
+  }
+}
+
+function onRecStop(){
+  const blob=new Blob(chunks,{type:getMime()});
+  const ext=getMime().includes('webm')?'webm':'mp4';
+  const now=new Date();
+  const ts=`${now.getFullYear()}${p(now.getMonth()+1)}${p(now.getDate())}_${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`;
+
+  // 优先使用预设文件名（来自 SHOW_WINDOW/START 的 file_name 参数）
+  let name;
+  if(pendingFileName){
+    name=pendingFileName.includes('.')?pendingFileName:pendingFileName+'.'+ext;
+    pendingFileName='';  // 录制完成，清除预设文件名
+  }else{
+    name=`REC_${ts}.${ext}`;
+  }
+
+  const url=URL.createObjectURL(blob);
+  const sizeMB=(blob.size/1024/1024).toFixed(2);
+  const dur=fmt(seconds);
+
+  files.unshift({name,url,sizeMB,dur,time:now.toLocaleTimeString()});
+  renderFiles();
+  setSt('stRec','空闲','st-idle');
+  log('recv',`{"event":"FILE_READY","file":"${name}","size":"${sizeMB}MB","dur":"${dur}"}`);
+
+  // 关闭摄像头
+  closeCamera();
+
+  // 模拟入上传队列
+  setTimeout(()=>simUploadItem(name,sizeMB),600);
+}
+
+// ===== 「暂停/继续」合一按钮 =====
+function togglePause(){
+  if(!isRec)return;
+  if(!isPaused){
+    if(mr&&mr.state==='recording')mr.pause();
+    isPaused=true;stopTimer();
+    document.getElementById('pauseIcon').textContent='▶';
+    document.getElementById('pauseTxt').textContent='继续';
+    document.getElementById('btnPause').className='btn btn-purple btn-lg';
+    document.getElementById('recBadge').classList.remove('show');
+    setSt('stRec','已暂停','st-paused');
+    log('send','{"cmd":"PAUSE_ACK","status":"paused"}');
+  }else{
+    if(mr&&mr.state==='paused')mr.resume();
+    isPaused=false;startTimer();
+    document.getElementById('pauseIcon').textContent='⏸';
+    document.getElementById('pauseTxt').textContent='暂停';
+    document.getElementById('btnPause').className='btn btn-warn btn-lg';
+    document.getElementById('recBadge').classList.add('show');
+    setSt('stRec','录制中','st-recording');
+    log('send','{"cmd":"RESUME_ACK","status":"recording"}');
+  }
+}
+
+// ===== 切换摄像头 =====
+function switchCamera(){
+  if(isRec){log('sys','录制中无法切换摄像头');return;}
+  if(camList.length<2){log('sys','仅检测到一个摄像头');return;}
+  camIdx=(camIdx+1)%camList.length;
+  document.getElementById('selCam').value=camList[camIdx].deviceId;
+  log('sys',`切换摄像头: ${camList[camIdx].label||'摄像头 '+(camIdx+1)}`);
+}
+
+// ===== 文件列表（每项内嵌播放按钮，无删除）=====
+function renderFiles(){
+  const el=document.getElementById('fileList');
+  const cnt=document.getElementById('fileCount');
+  cnt.textContent=files.length+' 个文件';
+  cnt.className=files.length?'badge badge-blue':'badge badge-gray';
+  if(!files.length){el.innerHTML='<div class="empty-hint">暂无录制文件</div>';return;}
+  el.innerHTML=files.map((f,i)=>`
+    <div class="file-item">
+      <div class="file-icon">🎬</div>
+      <div class="file-info">
+        <div class="file-name">${f.name}</div>
+        <div class="file-meta">时长 ${f.dur} &nbsp;|&nbsp; ${f.sizeMB} MB &nbsp;|&nbsp; ${f.time}</div>
+      </div>
+      <div class="file-actions">
+        <button class="fplay-btn" onclick="playFile(${i})">▶ 播放</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===== 独立播放弹窗 =====
+function playFile(i){
+  const f=files[i];
+  document.getElementById('playerPath').value=cfg.cachePath+'\\'+f.name;
+  document.getElementById('playerVideo').src=f.url;
+  openPlayerModal();
+  renderPlayerList();
+  log('recv',`{"event":"PLAY","file":"${f.name}"}`);
+}
+
+function openPlayerModal(){
+  renderPlayerList();
+  document.getElementById('playerModal').classList.add('show');
+}
+
+function renderPlayerList(){
+  const el=document.getElementById('playerList');
+  if(!files.length){el.innerHTML='<div style="font-size:12px;color:#9ca3af;padding:6px 0;">暂无录制文件</div>';return;}
+  el.innerHTML=files.map((f,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;cursor:pointer;"
+      onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''"
+      onclick="selPlayerFile(${i})">
+      <span>🎬</span>
+      <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.name}</span>
+      <span style="font-size:11px;color:#9ca3af;">${f.sizeMB}MB</span>
+    </div>`).join('');
+}
+
+function selPlayerFile(i){
+  const f=files[i];
+  document.getElementById('playerPath').value=cfg.cachePath+'\\'+f.name;
+  document.getElementById('playerVideo').src=f.url;
+  document.getElementById('playerVideo').play();
+}
+
+function loadPlayer(){
+  const path=document.getElementById('playerPath').value.trim();
+  if(!path)return;
+  const found=files.find(f=>path.includes(f.name));
+  if(found){document.getElementById('playerVideo').src=found.url;document.getElementById('playerVideo').play();}
+  else alert('演示模式：请从下方列表选择已录制文件');
+  log('send',`{"cmd":"PLAY","params":{"file_path":"${path}"}}`);
+}
+
+// ===== 上传队列模拟 =====
+function simUpload(){simUploadItem('REC_demo_'+Date.now()+'.mp4','8.5');}
+function simUploadItem(name,size){
+  const qEl=document.getElementById('uploadQueue');
+  const id='u'+Date.now();
+  if(qEl.querySelector('.empty-hint'))qEl.innerHTML='';
+  qEl.insertAdjacentHTML('afterbegin',`
+    <div class="upl-item" id="${id}">
+      <div class="upl-name">📤 ${name}</div>
+      <div class="upl-prog"><div class="upl-bar" id="${id}_b" style="width:0%"></div></div>
+      <div class="upl-ft"><span>${size} MB</span><span class="upl-pct" id="${id}_p">0%</span></div>
+    </div>`);
+  setSt('stUpload','上传中','st-online');
+  log('sys','开始上传: '+name);
+  let pct=0;
+  const iv=setInterval(()=>{
+    pct+=Math.random()*7+3;
+    if(pct>=100){
+      pct=100;clearInterval(iv);
+      document.getElementById(id+'_p').textContent='✅ 完成';
+      document.getElementById(id+'_b').style.background='#34d399';
+      setSt('stUpload','待机','st-idle');
+      log('recv',`{"event":"UPLOAD_DONE","file":"${name}","status":"success"}`);
+      setTimeout(()=>{const el=document.getElementById(id);if(el)el.remove();if(!document.getElementById('uploadQueue').children.length)document.getElementById('uploadQueue').innerHTML='<div class="empty-hint">队列为空</div>';},3000);
+    }
+    const b=document.getElementById(id+'_b');if(b)b.style.width=pct+'%';
+    const p2=document.getElementById(id+'_p');if(p2&&pct<100)p2.textContent=Math.floor(pct)+'%';
+  },300);
+}
+
+// ===== 配置弹窗 =====
+function openConfig(){
+  document.getElementById('cfgCache').value=cfg.cachePath;
+  document.getElementById('cfgPort').value=cfg.port;
+  document.getElementById('cfgBw').value=cfg.bw;
+  document.getElementById('cfgProto').value=cfg.proto;
+  document.getElementById('cfgHost').value=cfg.host;
+  document.getElementById('cfgFtpPort').value=cfg.ftpPort;
+  document.getElementById('cfgUser').value=cfg.user;
+  document.getElementById('cfgRemote').value=cfg.remote;
+  document.getElementById('cfgRetry').value=cfg.retry;
+  document.getElementById('cfgRetryInt').value=cfg.retryInt;
+  document.getElementById('configModal').classList.add('show');
+}
+function onProtoChange(){
+  document.getElementById('cfgFtpPort').value=document.getElementById('cfgProto').value==='sftp'?22:21;
+}
+function saveConfig(){
+  cfg.cachePath=document.getElementById('cfgCache').value;
+  cfg.port=parseInt(document.getElementById('cfgPort').value);
+  cfg.bw=parseInt(document.getElementById('cfgBw').value);
+  cfg.proto=document.getElementById('cfgProto').value;
+  cfg.host=document.getElementById('cfgHost').value;
+  cfg.ftpPort=parseInt(document.getElementById('cfgFtpPort').value);
+  cfg.user=document.getElementById('cfgUser').value;
+  cfg.remote=document.getElementById('cfgRemote').value;
+  cfg.retry=parseInt(document.getElementById('cfgRetry').value);
+  cfg.retryInt=parseInt(document.getElementById('cfgRetryInt').value);
+  updateStatusBar();
+  closeM('configModal');
+  log('sys',`配置已保存: ${cfg.proto.toUpperCase()}://${cfg.host}:${cfg.ftpPort}${cfg.remote}`);
+}
+
+// ===== TCP模拟 =====
+function toggleTcp(){
+  tcpConn=!tcpConn;
+  const el=document.getElementById('tcpStatus');
+  if(tcpConn){
+    el.className='badge badge-green';el.textContent='● TCP 已连接';
+    log('sys',`TCP 连接 127.0.0.1:${cfg.port}`);
+    log('recv','{"event":"CONNECTED","version":"2.1.0"}');
+  }else{
+    el.className='badge badge-gray';el.textContent='● TCP 未连接';
+    log('sys','TCP 连接已断开');
+  }
+}
+
+function sendCmd(cmd,params){
+  log('send',JSON.stringify({cmd,params}));
+  setTimeout(()=>{
+    let r;
+    switch(cmd){
+      case'STATUS':
+        r={event:'STATUS',state:isRec?(isPaused?'PAUSED':'RECORDING'):'IDLE',files:files.length};
+        break;
+      case'START':
+        // 支持 file_name 参数：预设文件名
+        if(params.file_name){pendingFileName=params.file_name;log('sys','预设文件名: '+params.file_name);}
+        if(!isRec)toggleRecord();
+        r={code:0,msg:'录制已启动',task_id:params.task_id||'',file_name:params.file_name||null};
+        break;
+      case'PAUSE':
+        if(isRec&&!isPaused)togglePause();
+        r={code:0,msg:'录制已暂停'};
+        break;
+      case'RESUME':
+        if(isRec&&isPaused)togglePause();
+        r={code:0,msg:'录制已继续'};
+        break;
+      case'STOP':
+        if(isRec)toggleRecord();
+        r={code:0,msg:'录制已停止'};
+        break;
+      case'PLAY':
+        openPlayerModal();
+        r={code:0,msg:'播放器已启动',file_path:params.file_path};
+        break;
+      case'LIST':
+        r={code:0,msg:'OK',list:files.map(f=>({name:f.name,size:f.sizeMB+'MB',dur:f.dur}))};
+        break;
+      case'SHOW_WINDOW':
+        // 吊起时可预设文件名
+        if(params.file_name){pendingFileName=params.file_name;log('sys','预设文件名: '+params.file_name);}
+        log('sys','主界面已显示');
+        r={code:0,msg:'主界面已显示',file_name:params.file_name||''};
+        break;
+      case'HIDE_WINDOW':
+        // 隐藏时清除预设文件名
+        pendingFileName='';
+        log('sys','主界面已隐藏，预设文件名已清除');
+        r={code:0,msg:'主界面已隐藏'};
+        break;
+      default:
+        r={code:-1,msg:'未知命令: '+cmd};
+    }
+    log('recv',JSON.stringify(r));
+  },120);
+}
+
+// ===== 音量计 =====
+function startVolMeter(){
+  if(volIv){clearInterval(volIv);volIv=null;}
+  if(!stream)return;
+  try{
+    audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    analyser=audioCtx.createAnalyser();analyser.fftSize=256;
+    audioCtx.createMediaStreamSource(stream).connect(analyser);
+    document.getElementById('volWrap').classList.add('show');
+    volIv=setInterval(()=>{
+      const buf=new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(buf);
+      const avg=buf.reduce((a,b)=>a+b,0)/buf.length;
+      document.getElementById('volBar').style.width=Math.min(avg*2,100)+'%';
+    },60);
+  }catch(e){}
+}
+
+// ===== 计时 =====
+function startTimer(){timerIv=setInterval(()=>{seconds++;document.getElementById('recTime').textContent=fmt(seconds);},1000);}
+function stopTimer(){clearInterval(timerIv);timerIv=null;}
+function fmt(s){return`${p(Math.floor(s/3600))}:${p(Math.floor(s%3600/60))}:${p(s%60)}`;}
+function p(n){return String(n).padStart(2,'0');}
+
+// ===== 工具 =====
+function getMime(){
+  for(const t of['video/webm;codecs=h264,opus','video/webm;codecs=vp9,opus','video/webm','video/mp4'])
+    if(MediaRecorder.isTypeSupported(t))return t;
+  return'video/webm';
+}
+function setSt(id,txt,cls){
+  const el=document.getElementById(id);
+  el.textContent=txt;el.className='st-val '+cls;
+}
+function updateStatusBar(){
+  document.getElementById('stCache').textContent=cfg.cachePath.split('\\').pop()||cfg.cachePath;
+  document.getElementById('stFtp').textContent=`${cfg.proto.toUpperCase()}:${cfg.host}`;
+}
+function log(type,msg){
+  const box=document.getElementById('tcpLog');
+  const now=new Date().toLocaleTimeString();
+  const pre={'send':'→','recv':'←','sys':'*','err':'!'}[type]||'*';
+  const d=document.createElement('div');d.className=type;
+  d.textContent=`[${now}] ${pre} ${msg}`;
+  box.appendChild(d);box.scrollTop=box.scrollHeight;
+}
+function clearLog(){document.getElementById('tcpLog').innerHTML='<div class="sys">[系统] 日志已清空</div>';}
+function openApi(){document.getElementById('apiModal').classList.add('show');}
+function closeM(id){document.getElementById(id).classList.remove('show');}
+document.querySelectorAll('.mask').forEach(m=>{
+  m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show');});
+});
+</script>
+</body>
+</html>
