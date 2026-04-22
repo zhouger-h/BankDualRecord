@@ -15,15 +15,15 @@ RequestExecutionLevel admin
 SetCompressor /SOLID lzma
 
 ; 安装程序图标
-!define MUI_ICON "icons\win\icon.ico"
-!define MUI_UNICON "icons\win\icon.ico"
+!define MUI_ICON "..\icons\win\icon.ico"
+!define MUI_UNICON "..\icons\win\icon.ico"
 
 ;─────────────────────────────────────────
 ; 页面
 ;─────────────────────────────────────────
 !include "MUI2.nsh"
 !insertmacro MUI_PAGE_WELCOME
-!insertmacro MUI_PAGE_LICENSE "docs\LICENSE.txt"
+!insertmacro MUI_PAGE_LICENSE "..\docs\LICENSE.txt"
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
@@ -45,30 +45,30 @@ Section "主程序" SecMain
 
     ; ── 程序文件（bin\ 目录由 build_windows.bat 通过 windeployqt 自动生成）──
     ; EXE
-    File "bin\${EXE_NAME}"
+    File "..\bin\${EXE_NAME}"
     ; Qt 核心依赖
-    File "bin\Qt5Core.dll"
-    File "bin\Qt5Gui.dll"
-    File "bin\Qt5Widgets.dll"
-    File "bin\Qt5Network.dll"
-    File "bin\Qt5Multimedia.dll"
-    File "bin\Qt5MultimediaWidgets.dll"
+    File "..\bin\Qt5Core.dll"
+    File "..\bin\Qt5Gui.dll"
+    File "..\bin\Qt5Widgets.dll"
+    File "..\bin\Qt5Network.dll"
+    File "..\bin\Qt5Multimedia.dll"
+    File "..\bin\Qt5MultimediaWidgets.dll"
     ; OpenSSL
-    File "bin\libssl-1_1.dll"
-    File "bin\libcrypto-1_1.dll"
+    File "..\bin\libssl-1_1.dll"
+    File "..\bin\libcrypto-1_1.dll"
     ; libssh2（SFTP 支持）
-    File "bin\libssh2.dll"
+    File "..\bin\libssh2.dll"
     ; MinGW 运行时
-    File "bin\libgcc_s_dw2-1.dll"
-    File "bin\libstdc++-6.dll"
-    File "bin\libwinpthread-1.dll"
+    File "..\bin\libgcc_s_dw2-1.dll"
+    File "..\bin\libstdc++-6.dll"
+    File "..\bin\libwinpthread-1.dll"
     ; Qt 插件目录
-    File /r "bin\platforms\*.*"
-    File /r "bin\imageformats\*.*"
-    File /r "bin\audio\*.*"
-    File /r "bin\styles\*.*"
+    File /r "..\bin\platforms\*.*"
+    File /r "..\bin\imageformats\*.*"
+    File /r "..\bin\audio\*.*"
+    File /r "..\bin\styles\*.*"
     ; Qt 资源
-    File /r "bin\translations\*.*"
+    File /r "..\bin\translations\*.*"
 
     ; 创建工作目录
     CreateDirectory "$PROFILE\BankDualRecord\videos"
