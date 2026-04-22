@@ -63,27 +63,27 @@ if not exist release\%EXE_NAME% (
 echo [SUCCESS] Build completed: release\%EXE_NAME%
 
 :: ============================================================
-:: Phase 2: Deploy (windeployqt)
+:: Phase 2: Deploy (windeployqt into release/)
 :: ============================================================
 echo.
 echo ========================================================
-echo  Phase 2: Deploying Qt Dependencies
+echo  Phase 2: Deploying Qt Dependencies into release\
 echo ========================================================
 
-:: --- Clean old bin/ directory ---
-if exist bin rmdir /s /q bin
-mkdir bin
-
-:: --- Copy EXE to bin/ ---
-echo [3/4] Copying EXE to bin\...
-copy /y release\%EXE_NAME% bin\ >nul
-
-:: --- Run windeployqt to collect all Qt dependencies ---
-echo       Running windeployqt...
-%QT_BIN%\windeployqt.exe --release --no-translations --no-opengl-sw bin\%EXE_NAME%
+echo [3/4] Running windeployqt...
+%QT_BIN%\windeployqt.exe --release --no-translations --no-opengl-sw release\%EXE_NAME%
 if %errorlevel% neq 0 (
     echo [WARNING] windeployqt had warnings, continuing...
 )
+
+:: Verify Qt5Core.dll exists
+if not exist release\Qt5Core.dll (
+    echo [ERROR] windeployqt failed - Qt5Core.dll not found in release\
+    echo [INFO]    Try running manually: %QT_BIN%\windeployqt.exe --release --dir release release\%EXE_NAME%
+    exit /b 1
+)
+
+echo [SUCCESS] Dependencies deployed to release\
 
 :: ============================================================
 :: Phase 3: Package (NSIS)
@@ -96,14 +96,14 @@ echo ========================================================
 :: --- Check NSIS ---
 if not exist %NSIS_PATH% (
     echo [WARNING] NSIS not found at %NSIS_PATH%
-    echo [INFO]    bin\ directory is ready. You can run NSIS manually.
+    echo [INFO]    release\ directory is ready with all dependencies.
     echo [INFO]    Command: makensis.exe install_windows.nsi
     goto :done
 )
 
 :: --- Run NSIS ---
 echo [4/4] Running NSIS...
-%NSIS_PATH% install_windows.nsi
+%NSIS_PATH% /DDEPLOY_DIR=release install_windows.nsi
 if %errorlevel% neq 0 (
     echo [ERROR] NSIS packaging failed!
     exit /b 1

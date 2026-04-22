@@ -1,5 +1,8 @@
-﻿; NSIS 一键安装脚本 - 银行柜面双录控件 (Windows 32位)
+﻿﻿; NSIS 一键安装脚本 - 银行柜面双录控件 (Windows 32位)
 ; 使用 NSIS (Nullsoft Scriptable Install System) - 开源免版税
+;
+; 用法: makensis.exe /DDEPLOY_DIR=release install_windows.nsi
+;       DEPLOY_DIR 默认为 "release"，可通过 /D 覆盖
 
 !define APP_NAME    "银行双录控件"
 !define APP_VERSION "1.0.0"
@@ -8,7 +11,10 @@
 !define REG_KEY     "SOFTWARE\BankSystem\DualRecord"
 !define UNINSTALL_KEY "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\BankDualRecord"
 
-; Base directory (parent of installer/)
+; 部署目录（由 build_windows.bat 通过 /D 传入，默认 release）
+!ifndef DEPLOY_DIR
+  !define DEPLOY_DIR "release"
+!endif
 
 Name "${APP_NAME} v${APP_VERSION}"
 OutFile "BankDualRecord_Setup_v${APP_VERSION}_x86.exe"
@@ -45,32 +51,19 @@ Section "主程序" SecMain
 
     SetOutPath "${INSTALL_DIR}"
 
-    ; ── 程序文件（bin\ 目录由 build_windows.bat 通过 windeployqt 自动生成）──
-    ; EXE
-    File "bin\${EXE_NAME}"
-    ; Qt 核心依赖
-    File "bin\Qt5Core.dll"
-    File "bin\Qt5Gui.dll"
-    File "bin\Qt5Widgets.dll"
-    File "bin\Qt5Network.dll"
-    File "bin\Qt5Multimedia.dll"
-    File "bin\Qt5MultimediaWidgets.dll"
-    ; OpenSSL
-    File "bin\libssl-1_1.dll"
-    File "bin\libcrypto-1_1.dll"
-    ; libssh2（SFTP 支持）
-    File "bin\libssh2.dll"
-    ; MinGW 运行时
-    File "bin\libgcc_s_dw2-1.dll"
-    File "bin\libstdc++-6.dll"
-    File "bin\libwinpthread-1.dll"
-    ; Qt 插件目录
-    File /r "bin\platforms\*.*"
-    File /r "bin\imageformats\*.*"
-    File /r "bin\audio\*.*"
-    File /r "bin\styles\*.*"
-    ; Qt 资源
-    File /r "bin\translations\*.*"
+    ; ── 程序文件（release\ 目录由 windeployqt 自动填充所有 Qt 依赖）──
+    ; 打包根目录文件（*.dll, *.exe）
+    File "${DEPLOY_DIR}\*.dll"
+    File "${DEPLOY_DIR}\${EXE_NAME}"
+    ; 打包 Qt 插件子目录（/nonfatal: 目录不存在时不报错）
+    File /nonfatal /r "${DEPLOY_DIR}\platforms"
+    File /nonfatal /r "${DEPLOY_DIR}\imageformats"
+    File /nonfatal /r "${DEPLOY_DIR}\audio"
+    File /nonfatal /r "${DEPLOY_DIR}\styles"
+    File /nonfatal /r "${DEPLOY_DIR}\mediaservice"
+    File /nonfatal /r "${DEPLOY_DIR}\bearer"
+    File /nonfatal /r "${DEPLOY_DIR}\iconengines"
+    File /nonfatal /r "${DEPLOY_DIR}\translations"
 
     ; 创建工作目录
     CreateDirectory "$PROFILE\BankDualRecord\videos"
