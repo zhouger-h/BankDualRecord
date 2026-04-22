@@ -8,6 +8,11 @@
 !define REG_KEY     "SOFTWARE\BankSystem\DualRecord"
 !define UNINSTALL_KEY "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\BankDualRecord"
 
+; Base directory (parent of installer/)
+
+!cd ".."
+
+
 Name "${APP_NAME} v${APP_VERSION}"
 OutFile "BankDualRecord_Setup_v${APP_VERSION}_x86.exe"
 InstallDir "${INSTALL_DIR}"
@@ -15,8 +20,8 @@ RequestExecutionLevel admin
 SetCompressor /SOLID lzma
 
 ; 安装程序图标
-!define MUI_ICON "icons\win\icon.ico"
-!define MUI_UNICON "icons\win\icon.ico"
+!define MUI_ICON "installer_icon.ico"
+!define MUI_UNICON "installer_icon.ico"
 
 ;─────────────────────────────────────────
 ; 页面
