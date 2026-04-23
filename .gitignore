@@ -2,12 +2,6 @@
 out/
 release/
 
-# qmake 生成文件
-Makefile
-Makefile.Debug
-Makefile.Release
-.qmake.stash
-
 # IDE / 编辑器
 .vscode/
 .idea/
