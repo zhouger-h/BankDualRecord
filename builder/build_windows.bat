@@ -80,7 +80,8 @@ echo  Phase 2: Deploying Qt Dependencies into %OUT_DIR%\
 echo ========================================================
 
 echo [3/4] Running windeployqt...
-%QT_BIN%\windeployqt.exe --release --no-translations --no-opengl-sw %OUT_DIR%\%EXE_NAME%
+::: 必须同时指定 --dir 和 exe 路径，否则 windeployqt 无法定位 platform plugin
+%QT_BIN%\windeployqt.exe --release --no-translations --no-opengl-sw --dir %OUT_DIR% %OUT_DIR%\%EXE_NAME%
 if %errorlevel% neq 0 (
     echo [WARNING] windeployqt had warnings, continuing...
 )
