@@ -50,7 +50,7 @@ if not exist %BUILD_DIR%\rcc mkdir %BUILD_DIR%\rcc
 
 ::: --- Run qmake ---
 echo [1/4] Running qmake...
-%QT_BIN%\qmake.exe DualRecordService.pro
+%QT_BIN%\qmake.exe DualRecordService.pro CONFIG+=release
 if %errorlevel% neq 0 (
     echo [ERROR] qmake failed!
     exit /b 1
