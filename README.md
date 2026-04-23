@@ -85,20 +85,15 @@ sudo apt-get install qt5-default libqt5multimedia5-dev libssh2-1-dev openssl-dev
 
 # 编译（一键）
 cd dual-record-system
-builder/build_kylin.sh
+builder/build-linux.sh
 
 # 或手动编译
 qmake DualRecordService.pro
 make -j$(nproc)
 # 产物：out/linux/DualRecordService
 
-# 打包 .deb（产物输出到 release/）
-builder/build_deb.sh
-
 # 安装 deb 包
 sudo dpkg -i release/dualrecord_1.0.0_amd64.deb
-# 或使用一键安装脚本
-sudo bash installer/install_kylin.sh
 ```
 
 安装完成后程序自动启动，首次运行弹出初始化向导。
